@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/cloudflare/cloudflare-go/v7"
@@ -15,6 +16,24 @@ import (
 	"github.com/cloudflare/cloudflare-go/v7/pages"
 	"github.com/cloudflare/cloudflare-go/v7/workers"
 )
+
+// nodejsCompatDefaultSince is the compatibility date from which Cloudflare enables the
+// nodejs_compat (and nodejs_compat_v2) compatibility flags by default. The flags must be
+// omitted for such dates, because the runtime rejects them as redundant and refuses to
+// start the Worker, which Cloudflare reports as error 1101.
+const nodejsCompatDefaultSince = "2026-08-04"
+
+var isoDatePattern = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+
+// nodejsCompatFlags returns the compatibility flags required for the given compatibility
+// date. The nodejs_compat flag is only needed for dates before 2026-08-04.
+func nodejsCompatFlags(compatibilityDate string) []string {
+	if !isoDatePattern.MatchString(compatibilityDate) || compatibilityDate < nodejsCompatDefaultSince {
+		return []string{"nodejs_compat"}
+	}
+
+	return nil
+}
 
 type CfAccount struct {
 	Token  string
@@ -169,23 +188,29 @@ func (acc *CfAccount) CreateWorkersDevSubdomain(ctx context.Context) (string, er
 }
 
 func (acc *CfAccount) DeployWorker(ctx context.Context, name string, script io.Reader, namespaceID string) error {
+	compatibilityDate := time.Now().UTC().Format("2006-01-02")
+	metadata := workers.ScriptUpdateParamsMetadata{
+		MainModule:        cloudflare.F("worker.js"),
+		CompatibilityDate: cloudflare.F(compatibilityDate),
+		Bindings: cloudflare.F([]workers.ScriptUpdateParamsMetadataBindingUnion{
+			workers.ScriptUpdateParamsMetadataBindingsWorkersBindingKindKVNamespace{
+				Name:        cloudflare.F("kv"),
+				NamespaceID: cloudflare.F(namespaceID),
+				Type:        cloudflare.F(workers.ScriptUpdateParamsMetadataBindingsWorkersBindingKindKVNamespaceTypeKVNamespace),
+			},
+		}),
+	}
+
+	if flags := nodejsCompatFlags(compatibilityDate); len(flags) > 0 {
+		metadata.CompatibilityFlags = cloudflare.F(flags)
+	}
+
 	_, err := acc.Client.Workers.Scripts.Update(
 		ctx,
 		name,
 		workers.ScriptUpdateParams{
 			AccountID: cloudflare.F(acc.ID),
-			Metadata: cloudflare.F(workers.ScriptUpdateParamsMetadata{
-				MainModule:         cloudflare.F("worker.js"),
-				CompatibilityDate:  cloudflare.F(time.Now().UTC().Format("2006-01-02")),
-				CompatibilityFlags: cloudflare.F([]string{"nodejs_compat"}),
-				Bindings: cloudflare.F([]workers.ScriptUpdateParamsMetadataBindingUnion{
-					workers.ScriptUpdateParamsMetadataBindingsWorkersBindingKindKVNamespace{
-						Name:        cloudflare.F("kv"),
-						NamespaceID: cloudflare.F(namespaceID),
-						Type:        cloudflare.F(workers.ScriptUpdateParamsMetadataBindingsWorkersBindingKindKVNamespaceTypeKVNamespace),
-					},
-				}),
-			}),
+			Metadata:  cloudflare.F(metadata),
 			Files: cloudflare.F([]io.Reader{
 				cloudflare.FileParam(
 					script,
@@ -219,19 +244,25 @@ func (acc *CfAccount) EnableSubdomain(ctx context.Context, subdomain string) err
 }
 
 func (acc *CfAccount) CreatePagesProject(ctx context.Context, name, namespaceID string) (string, error) {
+	compatibilityDate := time.Now().UTC().Format("2006-01-02")
+	production := pages.ProjectNewParamsDeploymentConfigsProduction{
+		Browsers:          cloudflare.F(map[string]pages.ProjectNewParamsDeploymentConfigsProductionBrowsers{}),
+		CompatibilityDate: cloudflare.F(compatibilityDate),
+		KVNamespaces: cloudflare.F(map[string]pages.ProjectNewParamsDeploymentConfigsProductionKVNamespaces{
+			"kv": {NamespaceID: cloudflare.F(namespaceID)},
+		}),
+	}
+
+	if flags := nodejsCompatFlags(compatibilityDate); len(flags) > 0 {
+		production.CompatibilityFlags = cloudflare.F(flags)
+	}
+
 	project, err := acc.Client.Pages.Projects.New(context.TODO(), pages.ProjectNewParams{
 		AccountID:        cloudflare.F(acc.ID),
 		Name:             cloudflare.F(name),
 		ProductionBranch: cloudflare.F("main"),
 		DeploymentConfigs: cloudflare.F(pages.ProjectNewParamsDeploymentConfigs{
-			Production: cloudflare.F(pages.ProjectNewParamsDeploymentConfigsProduction{
-				Browsers:           cloudflare.F(map[string]pages.ProjectNewParamsDeploymentConfigsProductionBrowsers{}),
-				CompatibilityDate:  cloudflare.F(time.Now().UTC().Format("2006-01-02")),
-				CompatibilityFlags: cloudflare.F([]string{"nodejs_compat"}),
-				KVNamespaces: cloudflare.F(map[string]pages.ProjectNewParamsDeploymentConfigsProductionKVNamespaces{
-					"kv": {NamespaceID: cloudflare.F(namespaceID)},
-				}),
-			}),
+			Production: cloudflare.F(production),
 		}),
 	})
 	if err != nil {
