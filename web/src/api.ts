@@ -1,4 +1,5 @@
 import Cloudflare, { Uploadable } from 'cloudflare';
+import { nodejsCompatFlags } from './compat';
 import { randSubdomain } from './random';
 
 export class CFAccount {
@@ -90,10 +91,11 @@ export class CFAccount {
     async deployWorker(name: string, script: Uploadable, namespaceId: string) {
         // TS SDK has bugs for workers deployment - Uploading files
         const date = new Date().toISOString().split('T')[0];
+        const flags = nodejsCompatFlags(date);
         const metadata = {
             main_module: 'worker.js',
             compatibility_date: date,
-            compatibility_flags: ['nodejs_compat'],
+            ...(flags.length ? { compatibility_flags: flags } : {}),
             bindings: [
                 { type: 'kv_namespace', name: 'kv', namespace_id: namespaceId }
             ]
@@ -119,7 +121,7 @@ export class CFAccount {
         //     metadata: {
         //         main_module: 'worker.js',
         //         compatibility_date: date,
-        //         compatibility_flags: ['nodejs_compat'],
+        //         ...(flags.length ? { compatibility_flags: flags } : {}),
         //         bindings: [{
         //             name: 'kv',
         //             namespace_id: namespaceId,
@@ -140,6 +142,7 @@ export class CFAccount {
 
     async createPagesProject(name: string, namespaceId: string): Promise<string> {
         const date = new Date().toISOString().split('T')[0];
+        const flags = nodejsCompatFlags(date);
 
         const project = await this.client.pages.projects.create({
             account_id: this.id,
@@ -149,7 +152,7 @@ export class CFAccount {
                 production: {
                     browsers: {},
                     compatibility_date: date,
-                    compatibility_flags: ['nodejs_compat'],
+                    ...(flags.length ? { compatibility_flags: flags } : {}),
                     kv_namespaces: {
                         'kv': { namespace_id: namespaceId }
                     }

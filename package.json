@@ -11,6 +11,9 @@
 	"license": "GPL-3.0",
 	"private": true,
 	"type": "module",
+	"scripts": {
+		"test": "node --test web/src/api.test.ts"
+	},
 	"bugs": {
 		"url": "https://github.com/bia-pain-bache/BPB-Wizard/issues"
 	},
