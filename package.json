@@ -1,11 +1,11 @@
 {
 	"name": "bpb-wizard",
-	"version": "3.0.2",
+	"version": "3.0.3",
 	"description": "BPB Wizard web edition",
 	"main": "public/index.js",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bia-pain-bache/BPB-Wizard.git"
+		"url": "git+https://github.com/ChiakoRh/BPB-Wizard.git"
 	},
 	"author": "bia-pain-bache",
 	"license": "GPL-3.0",
@@ -15,9 +15,9 @@
 		"test": "node --test web/src/api.test.ts"
 	},
 	"bugs": {
-		"url": "https://github.com/bia-pain-bache/BPB-Wizard/issues"
+		"url": "https://github.com/ChiakoRh/BPB-Wizard/issues"
 	},
-	"homepage": "https://github.com/bia-pain-bache/BPB-Wizard#readme",
+	"homepage": "https://github.com/ChiakoRh/BPB-Wizard#readme",
 	"devDependencies": {
 		"@cloudflare/workers-types": "^5.20260716.1",
 		"typescript": "^7.0.2"

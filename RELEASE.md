@@ -11,6 +11,7 @@ Wizard has web and CLI editions now. Both editions deploy each BPB Panel with a 
 - Fixed PowerShell version compatibility #76
 - Fixes Termux DNS issues, now can be used with or without VPN #76 #75
 - Fixed Fresh account missing workers.dev subdomain
+- Fixed deployment metadata, the redundant `nodejs_compat` compatibility flag prevented newly deployed panels from starting, which Cloudflare reported as error 1101.
 
 > [!TIP]
 > Wizard CLI version can only be used by scripts. Standalone execution is not permitted from now on. Windows users can only use `PowerShell` script to run the wizard.
