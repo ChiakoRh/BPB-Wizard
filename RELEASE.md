@@ -38,7 +38,7 @@ https://wizard.bpb-panel.workers.dev?pre-release=true
 Make sure to install Termux from [Github source](https://github.com/termux/termux-app/releases/latest) not Google Play.
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/ChiakoRh/BPB-Wizard/main/install.sh)
 ```
 
 ### Windows (PowerShell)
@@ -46,5 +46,5 @@ bash <(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/ma
 Windows users should use this script in PowerShell only.
 
 ```bash
-irm https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/ChiakoRh/BPB-Wizard/main/install.ps1 | iex
 ```
