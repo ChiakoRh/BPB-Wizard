@@ -7,6 +7,31 @@ interface Script {
     path: string;
 }
 
+/**
+ * Panel repositories the script is downloaded from, the fork first and the upstream
+ * project as a fallback for as long as the fork has no release published.
+ */
+const PANEL_REPOSITORIES = [
+    'https://github.com/ChiakoRh/BPB-Worker-Panel',
+    'https://github.com/bia-pain-bache/BPB-Worker-Panel'
+];
+
+async function fetchFirstOk(urls: string[], description: string): Promise<Response> {
+    let lastStatus = 0;
+    let lastUrl = urls[0];
+
+    for (const url of urls) {
+        const res = await fetch(url);
+
+        if (res.ok) return res;
+
+        lastStatus = res.status;
+        lastUrl = res.url || url;
+    }
+
+    throw new Error(`Failed to get ${description}: status ${lastStatus} at ${lastUrl}`);
+}
+
 export async function buildScript(
     account: CFAccount,
     workerName: string,
@@ -16,22 +41,26 @@ export async function buildScript(
 ): Promise<Script> {
     const pathCharset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456780-_';
     const passCharset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@$&*_-+;:,.';
+    const [panelRepository, fallbackPanelRepository] = PANEL_REPOSITORIES;
 
-    let url = 'https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/latest/download/worker.js';
+    let urls = [
+        `${panelRepository}/releases/latest/download/worker.js`,
+        `${fallbackPanelRepository}/releases/latest/download/worker.js`
+    ];
     if (preRelease) {
-        const res = await fetch('https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/dev/package.json');
-        if(!res.ok) {
-            throw new Error(`Failed to get pre-release script: status ${res.status} at ${res.url}`);
-        }
+        const res = await fetchFirstOk([
+            `https://raw.githubusercontent.com/ChiakoRh/BPB-Worker-Panel/refs/heads/dev/package.json`,
+            `https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/dev/package.json`
+        ], 'pre-release script');
 
         const { version } = await res.json() as any;
-        url = `https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/download/v${version}/worker.js`;
+        urls = [
+            `${panelRepository}/releases/download/v${version}/worker.js`,
+            `${fallbackPanelRepository}/releases/download/v${version}/worker.js`
+        ];
     }
 
-    const res = await fetch(url);
-    if (!res.ok) {
-        throw new Error(`Failed to get panel script: status ${res.status} at ${res.url}`)
-    }
+    const res = await fetchFirstOk(urls, 'panel script');
 
     const script = await res.text();
     const buildTimestamp = new Date().toISOString();

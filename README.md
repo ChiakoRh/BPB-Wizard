@@ -1,6 +1,6 @@
 <h1 align="center">💦 BPB Wizard</h1>
 
-This project aims to facilitate the installation process of [BPB Panel](https://github.com/bia-pain-bache/BPB-Worker-Panel) efficiently and prevent user mistakes during deployments.
+This project aims to facilitate the installation process of [BPB Panel](https://github.com/ChiakoRh/BPB-Worker-Panel) efficiently and prevent user mistakes during deployments.
 The wizard has now two editions: Web and CLI. The web edition generates a `Private Link` after deployment which enables `ONE-CLICK` installations per Cloudflare account. However Wizard CLI stores your logins on your operating system and supports multiple accounts' installations.
 
 <p align="center" style="display:flex; align-items: flex-start; justify-content: center; gap: 20px;">
@@ -25,13 +25,13 @@ https://wizard.bpb-panel.workers.dev
 Make sure to install Termux from [Github source](https://github.com/termux/termux-app/releases/latest) not Google Play.
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/ChiakoRh/BPB-Wizard/main/install.sh)
 ```
 
 ### Windows (PowerShell)
 
 ```bash
-irm https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/ChiakoRh/BPB-Wizard/main/install.ps1 | iex
 ```
 
 > [!TIP]

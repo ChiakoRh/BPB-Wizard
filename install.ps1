@@ -9,9 +9,20 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq 
 }
 
 $Archive = "BPB-Wizard-windows-$Arch.zip"
-$ArchiveUrl = "https://github.com/bia-pain-bache/BPB-Wizard/releases/latest/download/$Archive"
-$WorkerUrl = "https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/latest/download/worker.js"
-$LatestVersion = (Invoke-RestMethod -Uri "https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/VERSION").Trim()
+$ForkWizardRepo = "https://github.com/ChiakoRh/BPB-Wizard"
+$UpstreamWizardRepo = "https://github.com/bia-pain-bache/BPB-Wizard"
+$ForkPanelRepo = "https://github.com/ChiakoRh/BPB-Worker-Panel"
+$UpstreamPanelRepo = "https://github.com/bia-pain-bache/BPB-Worker-Panel"
+$ArchiveUrl = "$ForkWizardRepo/releases/latest/download/$Archive"
+$FallbackArchiveUrl = "$UpstreamWizardRepo/releases/latest/download/$Archive"
+$WorkerUrl = "$ForkPanelRepo/releases/latest/download/worker.js"
+$FallbackWorkerUrl = "$UpstreamPanelRepo/releases/latest/download/worker.js"
+
+try {
+    $LatestVersion = (Invoke-RestMethod -Uri "https://raw.githubusercontent.com/ChiakoRh/BPB-Wizard/main/VERSION").Trim()
+} catch {
+    $LatestVersion = (Invoke-RestMethod -Uri "https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/VERSION").Trim()
+}
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 
@@ -38,13 +49,21 @@ if ($NeedsInstall) {
     Write-Host "Downloading $Archive..."
 
     $zipPath = Join-Path $InstallDir $Archive
-    Invoke-WebRequest -Uri $ArchiveUrl -OutFile $zipPath
+    try {
+        Invoke-WebRequest -Uri $ArchiveUrl -OutFile $zipPath
+    } catch {
+        Invoke-WebRequest -Uri $FallbackArchiveUrl -OutFile $zipPath
+    }
     Expand-Archive -Path $zipPath -DestinationPath $InstallDir -Force
     Remove-Item $zipPath
 }
 
 Write-Host "Downloading worker.js..."
-Invoke-WebRequest -Uri $WorkerUrl -OutFile (Join-Path $InstallDir "worker.js")
+try {
+    Invoke-WebRequest -Uri $WorkerUrl -OutFile (Join-Path $InstallDir "worker.js")
+} catch {
+    Invoke-WebRequest -Uri $FallbackWorkerUrl -OutFile (Join-Path $InstallDir "worker.js")
+}
 
 $env:LAUNCHED_BY_SCRIPT = "1"
 

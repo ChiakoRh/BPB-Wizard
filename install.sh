@@ -34,10 +34,16 @@ fi
 BINARY="wizard"
 INSTALL_DIR="bpb-wizard"
 ARCHIVE="BPB-Wizard-${OS_LOWER}-${ARCH}.${EXT}"
-WORKER_URL="https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/latest/download/worker.js"
-ARCHIVE_URL="https://github.com/bia-pain-bache/BPB-Wizard/releases/latest/download/${ARCHIVE}"
+FORK_WIZARD_REPO="https://github.com/ChiakoRh/BPB-Wizard"
+UPSTREAM_WIZARD_REPO="https://github.com/bia-pain-bache/BPB-Wizard"
+FORK_PANEL_REPO="https://github.com/ChiakoRh/BPB-Worker-Panel"
+UPSTREAM_PANEL_REPO="https://github.com/bia-pain-bache/BPB-Worker-Panel"
+ARCHIVE_URL="${FORK_WIZARD_REPO}/releases/latest/download/${ARCHIVE}"
+FALLBACK_ARCHIVE_URL="${UPSTREAM_WIZARD_REPO}/releases/latest/download/${ARCHIVE}"
+WORKER_URL="${FORK_PANEL_REPO}/releases/latest/download/worker.js"
+FALLBACK_WORKER_URL="${UPSTREAM_PANEL_REPO}/releases/latest/download/worker.js"
 
-LATEST_VERSION=$(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/VERSION)
+LATEST_VERSION=$(curl -fsSL "https://raw.githubusercontent.com/ChiakoRh/BPB-Wizard/main/VERSION" || curl -fsSL "https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/VERSION")
 
 mkdir -p "${INSTALL_DIR}"
 
@@ -59,7 +65,7 @@ fi
 
 if [ "${NEEDS_INSTALL}" = "1" ]; then
     echo "Downloading ${ARCHIVE}..."
-    curl -L -# -o "${ARCHIVE}" "${ARCHIVE_URL}"
+    curl -L -# -o "${ARCHIVE}" "${ARCHIVE_URL}" || curl -L -# -o "${ARCHIVE}" "${FALLBACK_ARCHIVE_URL}"
 
     if [ "$EXT" = "zip" ]; then
         unzip -q -o "${ARCHIVE}" -d "${INSTALL_DIR}"
@@ -72,7 +78,7 @@ if [ "${NEEDS_INSTALL}" = "1" ]; then
 fi
 
 echo "Downloading worker.js..."
-curl -fsSL -o "${INSTALL_DIR}/worker.js" "${WORKER_URL}"
+curl -fsSL -o "${INSTALL_DIR}/worker.js" "${WORKER_URL}" || curl -fsSL -o "${INSTALL_DIR}/worker.js" "${FALLBACK_WORKER_URL}"
 
 export LAUNCHED_BY_SCRIPT="1"
 
